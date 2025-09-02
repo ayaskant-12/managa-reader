@@ -1,0 +1,95 @@
+<!-- templates/reading_history.html -->
+{% extends "base.html" %}
+{% block title %}Reading History{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Reading History</h2>
+    <div>
+        <form method="POST" action="{{ url_for('clear_reading_history') }}" class="d-inline">
+            <button type="submit" class="btn btn-outline-danger" 
+                    onclick="return confirm('Are you sure you want to clear your reading history?')">
+                Clear History
+            </button>
+        </form>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary ms-2">Back to Dashboard</a>
+    </div>
+</div>
+
+{% if history.items %}
+    <div class="list-group">
+        {% for record in history.items %}
+            {% set chapter = record.chapter %}
+            {% set manga = record.manga %}
+            <div class="list-group-item">
+                <div class="d-flex w-100 justify-content-between">
+                    <div class="d-flex">
+                        <img src="{{ manga.cover_url }}" alt="{{ manga.title }}" 
+                             style="width: 60px; height: 80px; object-fit: cover; margin-right: 15px;">
+                        <div>
+                            <h5 class="mb-1">
+                                <a href="{{ url_for('manga_detail', manga_id=manga.id) }}">{{ manga.title }}</a>
+                            </h5>
+                            <p class="mb-1">
+                                Chapter {{ chapter.chapter_number }}
+                                {% if chapter.title %} - {{ chapter.title }}{% endif %}
+                            </p>
+                            <small class="text-muted">
+                                Read {{ record.read_at.strftime('%Y-%m-%d at %H:%M') }}
+                            </small>
+                        </div>
+                    </div>
+                    <div>
+                        <a href="{{ url_for('read_chapter', manga_id=manga.id, chapter_number=chapter.chapter_number) }}" 
+                           class="btn btn-sm btn-primary">Continue Reading</a>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if history.pages > 1 %}
+        <nav aria-label="Reading history pagination" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if history.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('reading_history', page=history.prev_num) }}">Previous</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">Previous</span>
+                    </li>
+                {% endif %}
+                
+                {% for page_num in history.iter_pages() %}
+                    {% if page_num %}
+                        <li class="page-item {% if page_num == history.page %}active{% endif %}">
+                            <a class="page-link" href="{{ url_for('reading_history', page=page_num) }}">{{ page_num }}</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if history.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('reading_history', page=history.next_num) }}">Next</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">Next</span>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+{% else %}
+    <div class="alert alert-info">
+        Your reading history is empty. 
+        <a href="{{ url_for('manga_list') }}">Start reading some manga</a> to build your history.
+    </div>
+{% endif %}
+{% endblock %}

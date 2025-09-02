@@ -1,0 +1,110 @@
+<!-- templates/admin/user_list.html -->
+{% extends "admin/base.html" %}
+{% block title %}Manage Users{% endblock %}
+{% block header %}Manage Users{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <form method="GET" class="d-flex">
+        <input type="text" name="q" class="form-control me-2" placeholder="Search users..." value="{{ search_query }}">
+        <button type="submit" class="btn btn-outline-primary">Search</button>
+    </form>
+</div>
+
+{% if users.items %}
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Registered</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users.items %}
+                    <tr>
+                        <td>{{ user.id }}</td>
+                        <td>{{ user.username }}</td>
+                        <td>{{ user.email }}</td>
+                        <td>
+                            <span class="badge bg-{% if user.role == 'admin' %}danger{% else %}secondary{% endif %}">
+                                {{ user.role }}
+                            </span>
+                        </td>
+                        <td>{{ user.id }}</td> <!-- You might want to add a registration date field to your User model -->
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                {% if user.id != session.user_id %}
+                                    <form method="POST" action="{{ url_for('admin_toggle_user_role', user_id=user.id) }}" class="d-inline">
+                                        <button type="submit" class="btn btn-{% if user.role == 'admin' %}warning{% else %}success{% endif %}">
+                                            {% if user.role == 'admin' %}Demote{% else %}Promote{% endif %}
+                                        </button>
+                                    </form>
+                                    <form method="POST" action="{{ url_for('admin_delete_user', user_id=user.id) }}" class="d-inline">
+                                        <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this user?')">
+                                            Delete
+                                        </button>
+                                    </form>
+                                {% else %}
+                                    <span class="text-muted">Current user</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if users.pages > 1 %}
+        <nav aria-label="User pagination">
+            <ul class="pagination justify-content-center">
+                {% if users.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin_user_list', page=users.prev_num, q=search_query) }}">Previous</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">Previous</span>
+                    </li>
+                {% endif %}
+                
+                {% for page_num in users.iter_pages() %}
+                    {% if page_num %}
+                        <li class="page-item {% if page_num == users.page %}active{% endif %}">
+                            <a class="page-link" href="{{ url_for('admin_user_list', page=page_num, q=search_query) }}">{{ page_num }}</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if users.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin_user_list', page=users.next_num, q=search_query) }}">Next</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">Next</span>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+{% else %}
+    <div class="alert alert-info">
+        {% if search_query %}
+            No users found matching "{{ search_query }}".
+        {% else %}
+            No users found.
+        {% endif %}
+    </div>
+{% endif %}
+{% endblock %}

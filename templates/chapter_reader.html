@@ -1,0 +1,395 @@
+<!-- templates/chapter_reader.html -->
+{% extends "base.html" %}
+{% block title %}{{ manga.title }} - Chapter {{ chapter.chapter_number }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    .reader-container {
+        background-color: {% if session.get('dark_mode', False) %}#2c2c2c{% else %}#f8f9fa{% endif %};
+        min-height: 100vh;
+        padding: 20px 0;
+    }
+    .manga-page {
+        max-width: 100%;
+        height: auto;
+        display: block;
+        margin: 0 auto 20px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+    body.dark-mode .manga-page {
+        border-color: #555;
+    }
+    .reader-controls {
+        position: sticky;
+        top: 0;
+        background-color: rgba(255, 255, 255, 0.95);
+        z-index: 1000;
+        padding: 10px 0;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    body.dark-mode .reader-controls {
+        background-color: rgba(44, 44, 44, 0.95);
+        color: white;
+    }
+    .page-indicator {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background-color: rgba(0, 0, 0, 0.7);
+        color: white;
+        padding: 8px 12px;
+        border-radius: 20px;
+        font-size: 14px;
+        z-index: 1000;
+    }
+    .comments-section {
+        margin-top: 40px;
+        padding: 20px;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    body.dark-mode .comments-section {
+        background-color: #2c2c2c;
+        color: white;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    }
+    .comment {
+        border-bottom: 1px solid #eee;
+        padding: 15px 0;
+    }
+    body.dark-mode .comment {
+        border-bottom: 1px solid #444;
+    }
+    .comment-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    .comment-actions {
+        display: flex;
+        gap: 10px;
+    }
+    .bookmark-btn {
+        position: relative;
+    }
+    .bookmark-btn.active {
+        color: #ffc107;
+    }
+    .progress-bar {
+        height: 4px;
+        background-color: #e9ecef;
+        width: 100%;
+        margin-top: 10px;
+        border-radius: 2px;
+    }
+    body.dark-mode .progress-bar {
+        background-color: #444;
+    }
+    .progress-fill {
+        height: 100%;
+        background-color: #007bff;
+        border-radius: 2px;
+        width: 0%;
+        transition: width 0.3s ease;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="reader-container">
+    <div class="reader-controls">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <a href="{{ url_for('manga_detail', manga_id=manga.id) }}" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Back to Manga
+                    </a>
+                </div>
+                <div class="text-center">
+                    <h5 class="mb-0">{{ manga.title }} - Chapter {{ chapter.chapter_number }}</h5>
+                    {% if chapter.title %}
+                        <small class="text-muted">{{ chapter.title }}</small>
+                    {% endif %}
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="reading-progress"></div>
+                    </div>
+                </div>
+                <div>
+                    <button id="dark-mode-toggle" class="btn btn-sm btn-outline-secondary me-2">
+                        <i class="bi bi-moon"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-success bookmark-btn" id="bookmark-toggle" data-bs-toggle="modal" data-bs-target="#bookmarkModal">
+                        <i class="bi bi-bookmark"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="d-flex justify-content-center mt-3">
+                {% if prev_chapter %}
+                    <a href="{{ url_for('read_chapter', manga_id=manga.id, chapter_number=prev_chapter.chapter_number) }}" 
+                       class="btn btn-sm btn-primary me-2">
+                        <i class="bi bi-arrow-left-circle"></i> Previous Chapter
+                    </a>
+                {% endif %}
+                
+                <div class="btn-group me-2">
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="prev-page" disabled>
+                        <i class="bi bi-chevron-left"></i> Prev
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="next-page">
+                        Next <i class="bi bi-chevron-right"></i>
+                    </button>
+                </div>
+                
+                {% if next_chapter %}
+                    <a href="{{ url_for('read_chapter', manga_id=manga.id, chapter_number=next_chapter.chapter_number) }}" 
+                       class="btn btn-sm btn-primary">
+                        Next Chapter <i class="bi bi-arrow-right-circle"></i>
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="container" id="pages-container">
+        {% for page in pages %}
+            <img src="{{ page.image_url }}" class="manga-page" alt="Page {{ page.page_number }}" data-page-number="{{ page.page_number }}">
+        {% endfor %}
+        
+        <div class="d-flex justify-content-center mt-4 mb-4">
+            {% if prev_chapter %}
+                <a href="{{ url_for('read_chapter', manga_id=manga.id, chapter_number=prev_chapter.chapter_number) }}" 
+                   class="btn btn-primary me-2">
+                    <i class="bi bi-arrow-left-circle"></i> Previous Chapter
+                </a>
+            {% endif %}
+            
+            <a href="{{ url_for('manga_detail', manga_id=manga.id) }}" class="btn btn-secondary me-2">
+                <i class="bi bi-book"></i> Back to Manga
+            </a>
+            
+            {% if next_chapter %}
+                <a href="{{ url_for('read_chapter', manga_id=manga.id, chapter_number=next_chapter.chapter_number) }}" 
+                   class="btn btn-primary">
+                    Next Chapter <i class="bi bi-arrow-right-circle"></i>
+                </a>
+            {% endif %}
+        </div>
+        
+        <!-- Comments Section -->
+        <div class="comments-section">
+            <h4>Comments ({{ chapter.comments|length }})</h4>
+            
+            {% if 'user_id' in session %}
+                <form method="POST" action="{{ url_for('add_comment', chapter_id=chapter.id) }}" class="mb-4">
+                    <div class="mb-3">
+                        <label for="comment-text" class="form-label">Add a comment</label>
+                        <textarea class="form-control" id="comment-text" name="text" rows="3" 
+                                  placeholder="Share your thoughts about this chapter..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-chat"></i> Post Comment
+                    </button>
+                </form>
+            {% else %}
+                <div class="alert alert-info">
+                    <a href="{{ url_for('login') }}">Log in</a> to leave a comment.
+                </div>
+            {% endif %}
+            
+            {% if chapter.comments %}
+                <div class="comments-list">
+                    {% for comment in chapter.comments|sort(attribute='created_at', reverse=True) %}
+                        <div class="comment">
+                            <div class="comment-header">
+                                <div>
+                                    <strong>{{ comment.user.username }}</strong>
+                                    <small class="text-muted">{{ comment.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                                    {% if comment.updated_at != comment.created_at %}
+                                        <small class="text-muted">(edited)</small>
+                                    {% endif %}
+                                </div>
+                                <div class="comment-actions">
+                                    {% if session['user_id'] == comment.user_id or session.get('role') == 'admin' %}
+                                        {% if session['user_id'] == comment.user_id %}
+                                            <a href="{{ url_for('edit_comment', comment_id=comment.id) }}" 
+                                               class="btn btn-sm btn-outline-secondary">
+                                                <i class="bi bi-pencil"></i> Edit
+                                            </a>
+                                        {% endif %}
+                                        <form method="POST" action="{{ url_for('delete_comment', comment_id=comment.id) }}" 
+                                              class="d-inline">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" 
+                                                    onclick="return confirm('Are you sure you want to delete this comment?')">
+                                                <i class="bi bi-trash"></i> Delete
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <p class="comment-text">{{ comment.text }}</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    No comments yet. Be the first to comment!
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="page-indicator" id="page-indicator">
+        Page <span id="current-page">1</span> of {{ pages|length }}
+    </div>
+</div>
+
+<!-- Bookmark Modal -->
+<div class="modal fade" id="bookmarkModal" tabindex="-1" aria-labelledby="bookmarkModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="bookmarkModalLabel">Bookmark This Page</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('bookmark_page') }}">
+                <div class="modal-body">
+                    <input type="hidden" name="manga_id" value="{{ manga.id }}">
+                    <input type="hidden" name="chapter_id" value="{{ chapter.id }}">
+                    <input type="hidden" name="page_number" value="1" id="bookmarkPageNumber">
+                    
+                    <div class="mb-3">
+                        <label for="bookmarkNote" class="form-label">Add a note (optional)</label>
+                        <textarea class="form-control" id="bookmarkNote" name="note" rows="3" 
+                                  placeholder="Add a note about this page..."></textarea>
+                    </div>
+                    
+                    <div class="form-text">
+                        You're bookmarking page <span id="bookmark-page-display">1</span> of {{ pages|length }}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Bookmark</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Track current page for navigation and bookmarking
+    let currentPage = 1;
+    const totalPages = {{ pages|length }};
+    const lastPage = {{ last_page }};
+    
+    // Function to update current page and UI
+    function updateCurrentPage(pageNum) {
+        currentPage = pageNum;
+        
+        // Update URL without refreshing
+        const url = new URL(window.location);
+        url.searchParams.set('page', currentPage);
+        window.history.replaceState({}, '', url);
+        
+        // Update page indicator
+        document.getElementById('current-page').textContent = currentPage;
+        document.getElementById('bookmarkPageNumber').value = currentPage;
+        document.getElementById('bookmark-page-display').textContent = currentPage;
+        
+        // Update navigation buttons
+        document.getElementById('prev-page').disabled = currentPage === 1;
+        document.getElementById('next-page').disabled = currentPage === totalPages;
+        
+        // Update reading progress
+        const progress = (currentPage / totalPages) * 100;
+        document.getElementById('reading-progress').style.width = `${progress}%`;
+        
+        // Scroll to the current page
+        const pageElement = document.querySelector(`img[data-page-number="${currentPage}"]`);
+        if (pageElement) {
+            pageElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
+    
+    // Initialize page tracking
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set initial page based on URL parameter or last read page
+        const urlParams = new URLSearchParams(window.location.search);
+        const pageParam = urlParams.get('page');
+        if (pageParam) {
+            updateCurrentPage(parseInt(pageParam));
+        } else {
+            updateCurrentPage(lastPage);
+        }
+        
+        // Add intersection observer to track current page
+        const observerOptions = {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.6
+        };
+        
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const pageNum = parseInt(entry.target.getAttribute('data-page-number'));
+                    if (!isNaN(pageNum)) {
+                        updateCurrentPage(pageNum);
+                    }
+                }
+            });
+        }, observerOptions);
+        
+        // Observe all page images
+        document.querySelectorAll('.manga-page').forEach(img => {
+            observer.observe(img);
+        });
+        
+        // Add navigation event listeners
+        document.getElementById('prev-page').addEventListener('click', function() {
+            if (currentPage > 1) {
+                updateCurrentPage(currentPage - 1);
+            }
+        });
+        
+        document.getElementById('next-page').addEventListener('click', function() {
+            if (currentPage < totalPages) {
+                updateCurrentPage(currentPage + 1);
+            }
+        });
+        
+        // Add keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowLeft' && currentPage > 1) {
+                updateCurrentPage(currentPage - 1);
+            } else if (e.key === 'ArrowRight' && currentPage < totalPages) {
+                updateCurrentPage(currentPage + 1);
+            }
+        });
+    });
+    
+    // Dark mode toggle functionality
+    document.getElementById('dark-mode-toggle').addEventListener('click', function() {
+        document.body.classList.toggle('dark-mode');
+        const isDarkMode = document.body.classList.contains('dark-mode');
+        
+        // Update reader container background
+        const readerContainer = document.querySelector('.reader-container');
+        readerContainer.style.backgroundColor = isDarkMode ? '#2c2c2c' : '#f8f9fa';
+        
+        // Save preference to session
+        fetch('/toggle-dark-mode', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ dark_mode: isDarkMode })
+        });
+    });
+</script>
+{% endblock %}

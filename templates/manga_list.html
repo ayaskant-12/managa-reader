@@ -1,0 +1,112 @@
+<!-- templates/manga_list.html -->
+{% extends "base.html" %}
+{% block title %}Manga Library{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-header">
+                <h5>Filters</h5>
+            </div>
+            <div class="card-body">
+                <form method="GET" action="{{ url_for('manga_list') }}">
+                    <div class="mb-3">
+                        <label for="genre" class="form-label">Genre</label>
+                        <select class="form-select" id="genre" name="genre">
+                            <option value="">All Genres</option>
+                            {% for genre in genres %}
+                                <option value="{{ genre }}" {% if genre_filter == genre %}selected{% endif %}>{{ genre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="q" class="form-label">Search</label>
+                        <input type="text" class="form-control" id="q" name="q" value="{{ search_query }}" placeholder="Search manga...">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Apply Filters</button>
+                    <a href="{{ url_for('manga_list') }}" class="btn btn-secondary">Reset</a>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-9">
+        <h2>Manga Library</h2>
+        
+        {% if search_query or genre_filter %}
+            <p class="text-muted">
+                Showing results 
+                {% if search_query %}for "{{ search_query }}"{% endif %}
+                {% if genre_filter %}in genre "{{ genre_filter }}"{% endif %}
+            </p>
+        {% endif %}
+        
+        <div class="row">
+            {% for m in manga.items %}
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        <img src="{{ m.cover_url }}" class="card-img-top" alt="{{ m.title }}" style="height: 200px; object-fit: cover;">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ m.title }}</h5>
+                            <p class="card-text text-muted">By {{ m.author }}</p>
+                            <p class="card-text">{{ m.description[:100] }}{% if m.description|length > 100 %}...{% endif %}</p>
+                            <div class="mb-2">
+                                {% if m.genres %}
+                                    {% for genre in m.genres.split(',') %}
+                                        <span class="badge bg-secondary me-1">{{ genre.strip() }}</span>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                            <a href="{{ url_for('manga_detail', manga_id=m.id) }}" class="btn btn-primary">View Details</a>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="col-12">
+                    <div class="alert alert-info">No manga found matching your criteria.</div>
+                </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Pagination -->
+        {% if manga.pages > 1 %}
+            <nav aria-label="Manga pagination">
+                <ul class="pagination justify-content-center">
+                    {% if manga.has_prev %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('manga_list', page=manga.prev_num, genre=genre_filter, q=search_query) }}">Previous</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">Previous</span>
+                        </li>
+                    {% endif %}
+                    
+                    {% for page_num in manga.iter_pages() %}
+                        {% if page_num %}
+                            <li class="page-item {% if page_num == manga.page %}active{% endif %}">
+                                <a class="page-link" href="{{ url_for('manga_list', page=page_num, genre=genre_filter, q=search_query) }}">{{ page_num }}</a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if manga.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('manga_list', page=manga.next_num, genre=genre_filter, q=search_query) }}">Next</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">Next</span>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

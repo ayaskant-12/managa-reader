@@ -1,0 +1,48 @@
+<!-- templates/admin/view_pages.html -->
+{% extends "admin/base.html" %}
+{% block title %}View Pages{% endblock %}
+{% block header %}Pages for {{ manga.title }} - Chapter {{ chapter.chapter_number }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <a href="{{ url_for('admin_chapter_list', manga_id=manga.id) }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Chapters
+        </a>
+        <a href="{{ url_for('admin_upload_pages', chapter_id=chapter.id) }}" class="btn btn-primary ms-2">
+            <i class="bi bi-plus-circle"></i> Upload More Pages
+        </a>
+    </div>
+    <span class="badge bg-info">{{ pages|length }} pages</span>
+</div>
+
+<div class="row">
+    {% for page in pages %}
+        <div class="col-md-3 mb-4">
+            <div class="card">
+                <img src="{{ page.image_url }}" class="card-img-top" alt="Page {{ page.page_number }}" style="height: 200px; object-fit: contain;">
+                <div class="card-body">
+                    <h5 class="card-title">Page {{ page.page_number }}</h5>
+                    <div class="btn-group btn-group-sm w-100">
+                        <a href="{{ page.image_url }}" target="_blank" class="btn btn-outline-primary">
+                            <i class="bi bi-eye"></i> View
+                        </a>
+                        <form method="POST" action="{{ url_for('admin_delete_page', page_id=page.id) }}" class="d-inline">
+                            <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Delete this page?')">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="col-12">
+            <div class="alert alert-info">
+                No pages found for this chapter. 
+                <a href="{{ url_for('admin_upload_pages', chapter_id=chapter.id) }}">Upload pages</a>.
+            </div>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}

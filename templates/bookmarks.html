@@ -1,0 +1,118 @@
+<!-- templates/bookmarks.html -->
+{% extends "base.html" %}
+{% block title %}My Bookmarks{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>My Bookmarks</h2>
+    <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">Back to Dashboard</a>
+</div>
+
+{% if bookmarks.items %}
+    <div class="row">
+        {% for bookmark in bookmarks.items %}
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="row g-0">
+                        <div class="col-md-4">
+                            <img src="{{ bookmark.manga.cover_url }}" class="img-fluid rounded-start h-100" 
+                                 alt="{{ bookmark.manga.title }}" style="object-fit: cover;">
+                        </div>
+                        <div class="col-md-8">
+                            <div class="card-body d-flex flex-column h-100">
+                                <h5 class="card-title">
+                                    <a href="{{ url_for('manga_detail', manga_id=bookmark.manga.id) }}">
+                                        {{ bookmark.manga.title }}
+                                    </a>
+                                </h5>
+                                <p class="card-text">{{ bookmark.manga.description[:100] }}...</p>
+                                
+                                {% if bookmark.chapter %}
+                                    <p class="card-text">
+                                        <small class="text-muted">
+                                            Chapter {{ bookmark.chapter.chapter_number }}
+                                            {% if bookmark.chapter.title %} - {{ bookmark.chapter.title }}{% endif %}
+                                        </small>
+                                    </p>
+                                {% endif %}
+                                
+                                {% if bookmark.note %}
+                                    <div class="mt-2 p-2 bg-light rounded">
+                                        <strong>Note:</strong> {{ bookmark.note }}
+                                    </div>
+                                {% endif %}
+                                
+                                <div class="mt-auto d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">
+                                        Bookmarked {{ bookmark.created_at.strftime('%Y-%m-%d') }}
+                                    </small>
+                                    <div class="btn-group">
+                                        {% if bookmark.chapter %}
+                                            <a href="{{ url_for('read_chapter', manga_id=bookmark.manga.id, chapter_number=bookmark.chapter.chapter_number) }}?page={{ bookmark.page_number }}"
+                                               class="btn btn-sm btn-primary">Continue Reading</a>
+                                        {% else %}
+                                            <a href="{{ url_for('manga_detail', manga_id=bookmark.manga.id) }}"
+                                               class="btn btn-sm btn-primary">View Manga</a>
+                                        {% endif %}
+                                        <form method="POST" action="{{ url_for('delete_bookmark', bookmark_id=bookmark.id) }}" 
+                                              class="d-inline">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" 
+                                                    onclick="return confirm('Remove this bookmark?')">
+                                                Remove
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if bookmarks.pages > 1 %}
+        <nav aria-label="Bookmarks pagination" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if bookmarks.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('bookmarks', page=bookmarks.prev_num) }}">Previous</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">Previous</span>
+                    </li>
+                {% endif %}
+                
+                {% for page_num in bookmarks.iter_pages() %}
+                    {% if page_num %}
+                        <li class="page-item {% if page_num == bookmarks.page %}active{% endif %}">
+                            <a class="page-link" href="{{ url_for('bookmarks', page=page_num) }}">{{ page_num }}</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if bookmarks.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('bookmarks', page=bookmarks.next_num) }}">Next</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">Next</span>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+{% else %}
+    <div class="alert alert-info">
+        You haven't bookmarked any manga yet. 
+        <a href="{{ url_for('manga_list') }}">Browse manga</a> and click the bookmark button to save your favorites.
+    </div>
+{% endif %}
+{% endblock %}

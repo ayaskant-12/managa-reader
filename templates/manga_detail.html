@@ -1,0 +1,62 @@
+<!-- templates/manga_detail.html -->
+{% extends "base.html" %}
+{% block title %}{{ manga.title }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <img src="{{ manga.cover_url }}" class="img-fluid rounded" alt="{{ manga.title }}">
+        
+        {% if 'user_id' in session %}
+            <div class="mt-3">
+                <form action="{{ url_for('toggle_bookmark', manga_id=manga.id) }}" method="POST" class="d-inline">
+                    {% if is_bookmarked %}
+                        <button type="submit" class="btn btn-warning">Remove Bookmark</button>
+                    {% else %}
+                        <button type="submit" class="btn btn-primary">Add Bookmark</button>
+                    {% endif %}
+                </form>
+            </div>
+        {% endif %}
+    </div>
+    
+    <div class="col-md-8">
+        <h1>{{ manga.title }}</h1>
+        <p class="lead">By {{ manga.author }}</p>
+        
+        <div class="mb-3">
+            {% if manga.genres %}
+                {% for genre in manga.genres.split(',') %}
+                    <span class="badge bg-secondary me-1">{{ genre.strip() }}</span>
+                {% endfor %}
+            {% endif %}
+        </div>
+        
+        <div class="mb-4">
+            <h4>Description</h4>
+            <p>{{ manga.description }}</p>
+        </div>
+        
+        <div>
+            <h4>Chapters</h4>
+            {% if chapters %}
+                <div class="list-group">
+                    {% for chapter in chapters %}
+                        <a href="{{ url_for('read_chapter', manga_id=manga.id, chapter_number=chapter.chapter_number) }}" 
+                           class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">
+                                    Chapter {{ chapter.chapter_number }}{% if chapter.title %} - {{ chapter.title }}{% endif %}
+                                </h5>
+                                <small>{{ chapter.release_date.strftime('%Y-%m-%d') }}</small>
+                            </div>
+                        </a>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="alert alert-info">No chapters available yet.</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

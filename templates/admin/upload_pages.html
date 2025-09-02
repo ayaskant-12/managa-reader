@@ -1,0 +1,74 @@
+<!-- templates/admin/upload_pages.html -->
+{% extends "admin/base.html" %}
+{% block title %}Upload Pages{% endblock %}
+{% block header %}Upload Pages for {{ manga.title }} - Chapter {{ chapter.chapter_number }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">Upload Multiple Pages</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('admin_upload_pages', chapter_id=chapter.id) }}" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="pages" class="form-label">Select Page Images</label>
+                        <input class="form-control" type="file" id="pages" name="pages" multiple accept="image/*">
+                        <div class="form-text">Select multiple page images. They will be sorted alphabetically.</div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Upload Pages</button>
+                    <a href="{{ url_for('admin_chapter_list', manga_id=manga.id) }}" class="btn btn-secondary">Cancel</a>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="card-title">Upload ZIP File</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('admin_upload_zip', chapter_id=chapter.id) }}" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="zip_file" class="form-label">Select ZIP File</label>
+                        <input class="form-control" type="file" id="zip_file" name="zip_file" accept=".zip">
+                        <div class="form-text">Upload a ZIP file containing all chapter pages. Files will be sorted alphabetically.</div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Upload ZIP</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">Current Pages</h5>
+            </div>
+            <div class="card-body">
+                {% set pages = chapter.pages|sort(attribute='page_number') %}
+                {% if pages %}
+                    <div class="list-group">
+                        {% for page in pages %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    Page {{ page.page_number }}
+                                    <br>
+                                    <small class="text-muted">{{ page.image_url.split('/')[-1][:20] }}...</small>
+                                </div>
+                                <form method="POST" action="{{ url_for('admin_delete_page', page_id=page.id) }}" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this page?')">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted">No pages uploaded yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

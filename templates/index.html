@@ -1,0 +1,44 @@
+<!-- templates/index.html -->
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<div class="jumbotron bg-light p-5 rounded-lg">
+    <h1 class="display-4">Welcome to Manga Reader</h1>
+    <p class="lead">Your ultimate destination for reading manga online. Browse thousands of titles, track your reading progress, and join our community of manga enthusiasts.</p>
+    <hr class="my-4">
+    {% if 'user_id' not in session %}
+        <p>Get started by creating an account or logging in to access all features.</p>
+        <a class="btn btn-primary btn-lg me-2" href="{{ url_for('register') }}" role="button">Register</a>
+        <a class="btn btn-outline-primary btn-lg" href="{{ url_for('login') }}" role="button">Login</a>
+    {% else %}
+        <p>Welcome back, {{ session.username }}! Continue your manga journey.</p>
+        <a class="btn btn-primary btn-lg me-2" href="{{ url_for('dashboard') }}" role="button">Dashboard</a>
+        <a class="btn btn-outline-primary btn-lg" href="#" role="button">Browse Manga</a>
+    {% endif %}
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-4">
+        <h3>Extensive Library</h3>
+        <p>Access thousands of manga titles across various genres, from popular shonen to niche seinen.</p>
+    </div>
+    <div class="col-md-4">
+        <h3>Reading Tracking</h3>
+        <p>Bookmark your favorite series and keep track of your reading progress automatically.</p>
+    </div>
+    <div class="col-md-4">
+        <h3>Community Features</h3>
+        <p>Join discussions, share reviews, and connect with other manga enthusiasts.</p>
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-12">
+        <h2>Popular Manga</h2>
+        <div class="alert alert-info">
+            Manga browsing feature coming soon! The admin panel for uploading manga will be implemented next.
+        </div>
+    </div>
+</div>
+{% endblock %}

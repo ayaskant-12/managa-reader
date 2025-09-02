@@ -1,0 +1,48 @@
+<!-- templates/admin/add_manga.html -->
+{% extends "admin/base.html" %}
+{% block title %}Add New Manga{% endblock %}
+{% block header %}Add New Manga{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('admin_add_manga') }}" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Title *</label>
+                        <input type="text" class="form-control" id="title" name="title" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="author" class="form-label">Author *</label>
+                        <input type="text" class="form-control" id="author" name="author" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="4"></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="genres" class="form-label">Genres</label>
+                        <input type="text" class="form-control" id="genres" name="genres" placeholder="Comma-separated genres (e.g., Action, Adventure, Comedy)">
+                        <div class="form-text">Separate multiple genres with commas</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="cover" class="form-label">Cover Image</label>
+                        <input class="form-control" type="file" id="cover" name="cover" accept="image/*">
+                        <div class="form-text">Upload a cover image for this manga</div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="submit" class="btn btn-primary">Add Manga</button>
+                        <a href="{{ url_for('admin_manga_list') }}" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

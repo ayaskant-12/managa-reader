@@ -1,0 +1,65 @@
+<!-- templates/admin/chapter_list.html -->
+{% extends "admin/base.html" %}
+{% block title %}Manage Chapters{% endblock %}
+{% block header %}Chapters for {{ manga.title }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <a href="{{ url_for('admin_manga_list') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Back to Manga
+    </a>
+    <a href="{{ url_for('admin_add_chapter', manga_id=manga.id) }}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Add New Chapter
+    </a>
+</div>
+
+{% if chapters %}
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>Chapter</th>
+                    <th>Title</th>
+                    <th>Pages</th>
+                    <th>Release Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for chapter in chapters %}
+                    <tr>
+                        <td>{{ chapter.chapter_number }}</td>
+                        <td>{{ chapter.title or 'No title' }}</td>
+                        <td>{{ chapter.pages|length }}</td>
+                        <td>{{ chapter.release_date.strftime('%Y-%m-%d') }}</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ url_for('admin_upload_pages', chapter_id=chapter.id) }}" class="btn btn-outline-primary">
+                                    <i class="bi bi-images"></i> Pages
+                                </a>
+                                <a href="{{ url_for('admin_view_pages', chapter_id=chapter.id) }}" class="btn btn-outline-info">
+                                    <i class="bi bi-eye"></i> View
+                                </a>
+                                <a href="{{ url_for('read_chapter', manga_id=manga.id, chapter_number=chapter.chapter_number) }}" 
+                                   class="btn btn-outline-secondary" target="_blank">
+                                    <i class="bi bi-book"></i> Read
+                                </a>
+                                <form method="POST" action="{{ url_for('admin_delete_chapter', chapter_id=chapter.id) }}" class="d-inline">
+                                    <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Delete this chapter?')">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% else %}
+    <div class="alert alert-info">
+        No chapters found for this manga. 
+        <a href="{{ url_for('admin_add_chapter', manga_id=manga.id) }}">Add the first chapter</a>.
+    </div>
+{% endif %}
+{% endblock %}
